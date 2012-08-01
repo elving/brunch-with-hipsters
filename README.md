@@ -2,7 +2,7 @@
 
 ![image](http://www.latimes.com/media/photo/2011-07/63171841.jpg)
 
-Brunch with Hipsters is a radballs [Brunch](http://brunch.io/) app skeleton that comes ready to be hacked out of the box. Take a look at [Hackerank (an example app)](https://github.com/elving/Hackerank) to see how it works. Brunch with Hipsters was awesome before awesome was awesome.
+Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that comes with unicorns out of the box. Take a look at [Hackerank (an example app)](https://github.com/elving/Hackerank) to see how it works. Brunch with Hipsters was awesome before awesome was awesome.
 
 ## Languages
 
