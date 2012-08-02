@@ -19,6 +19,7 @@
     Backbone.View::template = ->
 
     Backbone.View::getRenderData = ->
+        @model?.toJSON()
 
     Backbone.View::render = ->
         console.debug "Rendering #{@constructor.name}", @
