@@ -1,4 +1,4 @@
-# Brunch with Hipsters
+# Brunch with Hipsters and Bootstrap
 
 ![image](http://www.latimes.com/media/photo/2011-07/63171841.jpg)
 
@@ -12,6 +12,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 
 ## Features
 
+- [Twitter Bootstrap v2.0.4](https://github.com/twitter/bootstrap/)
 - [Swag v0.0.3](https://github.com/elving/swag)
 - [Font Awesome v2.0](https://github.com/FortAwesome/Font-Awesome)
 - [Modernizr v2.6.1](https://github.com/Modernizr/Modernizr)
@@ -19,7 +20,6 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 - [Backbone-Mediator](https://github.com/chalbert/Backbone-Mediator)
 - [Lodash v0.4.2](https://github.com/bestiejs/lodash)
 - [HTML5 Boilerplate v3.0.0](https://github.com/h5bp/html5-boilerplate)
-
 
 ## Getting started
 
