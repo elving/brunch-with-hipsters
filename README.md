@@ -17,7 +17,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 - [Modernizr v2.6.1](https://github.com/Modernizr/Modernizr)
 - [Brunch Auto-Reload v1.3.2](https://github.com/brunch/auto-reload-brunch)
 - [Backbone-Mediator](https://github.com/chalbert/Backbone-Mediator)
-- [Lodash v0.4.2](https://github.com/bestiejs/lodash)
+- [Lodash v0.5.0-rc.1](https://github.com/bestiejs/lodash)
 - [HTML5 Boilerplate v3.0.0](https://github.com/h5bp/html5-boilerplate)
 
 

@@ -10,7 +10,7 @@ exports.config =
                 # even if they aren't specified in order.
                 before: [
                     'vendor/scripts/jquery-1.8.0pre.js'
-                    'vendor/scripts/lodash-0.4.2.js'
+                    'vendor/scripts/lodash-v0.5.0-rc.1.js'
                     'vendor/scripts/backbone-0.9.2.js'
                 ]
 
