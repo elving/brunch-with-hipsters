@@ -14,7 +14,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 
 
 - [Twitter Bootstrap v2.0.4](https://github.com/twitter/bootstrap/)
-- [Swag v0.1.3](https://github.com/elving/swag)
+- [Swag v0.1.4](https://github.com/elving/swag)
 - [Font Awesome v2.0](https://github.com/FortAwesome/Font-Awesome)
 - [Modernizr v2.6.1](https://github.com/Modernizr/Modernizr)
 - [Brunch Auto-Reload v1.3.2](https://github.com/brunch/auto-reload-brunch)
