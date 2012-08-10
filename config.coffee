@@ -18,7 +18,11 @@ exports.config =
             joinTo: 'stylesheets/app.css'
             order:
                 before: ['vendor/styles/normalize.css']
-                after: ['vendor/styles/helpers.css']
+                after: [
+                    'vendor/styles/helpers.css'
+                    'vendor/styles/bootstrap.min.css'
+                    'vendor/styles/bootstrap-responsive.min.css'
+                ]
 
         templates:
             joinTo: 'javascripts/app.js'
