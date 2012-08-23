@@ -1,4 +1,6 @@
-module.exports = class AppView extends Backbone.View
+View = require '../lib/view'
+
+module.exports = class AppView extends View
     el: 'body.application'
 
     initialize: ->
