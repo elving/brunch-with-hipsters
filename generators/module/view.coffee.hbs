@@ -1,4 +1,7 @@
 View = require '../lib/view'
+{{#camelize}}{{name}}{{/camelize}}Model = require '../models/{{name}}'
 
 module.exports = class {{#camelize}}{{name}}{{/camelize}}View extends View
     template: require 'views/templates/{{name}}'
+
+    model: new {{#camelize}}{{name}}{{/camelize}}Model()
