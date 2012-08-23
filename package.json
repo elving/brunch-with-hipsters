@@ -26,6 +26,8 @@
         "uglify-js-brunch": "> 1.0 < 1.5",
         "clean-css-brunch": "> 1.0 < 1.5",
 
+        "coffeelint-brunch": "0.1.0",
+
         "auto-reload-brunch": "> 1.0 < 1.5"
     },
     "devDependencies": {
