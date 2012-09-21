@@ -1,5 +1,10 @@
 module.exports = class View extends Backbone.View
+    tagName: 'section'
+
     template: ->
+
+    initialize: ->
+        @render()
 
     getRenderData: ->
         @model?.toJSON()
