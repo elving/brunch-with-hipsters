@@ -19,6 +19,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 - [Backbone-Mediator](https://github.com/chalbert/Backbone-Mediator)
 - [Lodash v0.8.2](https://github.com/bestiejs/lodash)
 - [HTML5 Boilerplate v3.0.0](https://github.com/h5bp/html5-boilerplate)
+- [Coffeelint 1.4.4](https://github.com/ilkosta/coffeelint-brunch)
 
 ## Getting started
 
