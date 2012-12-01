@@ -1,0 +1,5 @@
+{{#camelize}}{{pluralName}}{{/camelize}}Collection = require 'collections/{{pluralName}}'
+
+describe '{{#camelize}}{{pluralName}}{{/camelize}}Collection', ->
+    beforeEach ->
+        @collection = new {{#camelize}}{{pluralName}}{{/camelize}}Collection()
