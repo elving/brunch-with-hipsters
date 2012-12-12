@@ -8,7 +8,7 @@ Hipster.Collections ?= {}
 
 $ ->
     # Load App Helpers
-    require '../lib/app_helpers'
+    require 'lib/app_helpers'
 
     # Initialize App
     Hipster.Views.AppView = new AppView = require 'views/app_view'
