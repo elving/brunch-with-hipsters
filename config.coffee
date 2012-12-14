@@ -20,7 +20,7 @@ exports.config =
                 before: [
                     'vendor/scripts/jquery-1.8.3.js'
                     'vendor/scripts/lodash-1.0.0-rc.2.js'
-                    'vendor/scripts/backbone-0.9.9-pre.js'
+                    'vendor/scripts/backbone-0.9.9.js'
                 ]
 
         stylesheets:
