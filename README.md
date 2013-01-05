@@ -16,7 +16,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 - [Font Awesome v3.0](https://github.com/FortAwesome/Font-Awesome)
 - [Modernizr v2.6.2](https://github.com/Modernizr/Modernizr)
 - [Brunch Auto-Reload v1.3.2](https://github.com/brunch/auto-reload-brunch)
-- [Lodash v1.0.0-rc.2](https://github.com/bestiejs/lodash)
+- [Lodash v1.0.0-rc.3](https://github.com/bestiejs/lodash)
 - [HTML5 Boilerplate v3.0.0](https://github.com/h5bp/html5-boilerplate)
 - [Coffeelint 1.4.4](https://github.com/ilkosta/coffeelint-brunch)
 
