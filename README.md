@@ -12,7 +12,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 
 ## Features
 
-- [Swag v0.2.0](https://github.com/elving/swag)
+- [Swag v0.2.1](https://github.com/elving/swag)
 - [Font Awesome v3.0](https://github.com/FortAwesome/Font-Awesome)
 - [Modernizr v2.6.2](https://github.com/Modernizr/Modernizr)
 - [Brunch Auto-Reload v1.3.2](https://github.com/brunch/auto-reload-brunch)
