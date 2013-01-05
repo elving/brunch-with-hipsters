@@ -18,9 +18,9 @@ exports.config =
                 # Files in `vendor` directories are compiled before other files
                 # even if they aren't specified in order.
                 before: [
-                    'vendor/scripts/jquery-1.8.3.js'
-                    'vendor/scripts/lodash-1.0.0-rc.2.js'
-                    'vendor/scripts/backbone-0.9.9.js'
+                    'vendor/scripts/jquery.js'
+                    'vendor/scripts/lodash.js'
+                    'vendor/scripts/backbone.js'
                 ]
 
         stylesheets:
