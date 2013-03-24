@@ -26,7 +26,10 @@ exports.config =
         stylesheets:
             joinTo: 'stylesheets/app.css'
             order:
-                before: ['vendor/styles/normalize.css']
+                before: [
+                    'vendor/styles/normalize.css'
+                    'vendor/styles/typeplate-unminified.css'
+                ]
                 after: ['vendor/styles/helpers.css']
 
         templates:
