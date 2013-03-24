@@ -1,6 +1,6 @@
 
 /*
-    Swag v0.2.1 <http://elving.github.com/swag/>
+    Swag v0.2.6 <http://elving.github.com/swag/>
     Copyright 2012 Elving Rodriguez <http://elving.me/>
     Available under MIT license <https://raw.github.com/elving/swag/master/LICENSE>
 */
@@ -111,7 +111,7 @@
   });
 
   Handlebars.registerHelper('newLineToBr', function(str) {
-    return str.replace(/\n/g, '<br>');
+    return str.replace(/\r?\n|\r/g, '<br>');
   });
 
   Handlebars.registerHelper('first', function(array, count) {
@@ -259,27 +259,30 @@
     }
   });
 
-  Handlebars.registerHelper('eachIndex', function(context, options) {
-    var data, i, j, ret;
-    ret = '';
-    if (options.data != null) {
-      data = Handlebars.createFrame(options.data);
+  Handlebars.registerHelper('eachIndex', function(array, options) {
+    var index, result, value, _i, _len;
+    result = '';
+    for (index = _i = 0, _len = array.length; _i < _len; index = ++_i) {
+      value = array[index];
+      result += options.fn({
+        item: value,
+        index: index
+      });
     }
-    if (context && context.length > 0) {
-      i = 0;
-      j = context.length;
-      while (i < j) {
-        if (data) {
-          data.index = i;
-        }
-        context[i].index = i;
-        ret = ret + options.fn(context[i]);
-        i++;
-      }
-    } else {
-      ret = options.inverse(this);
+    return result;
+  });
+
+  Handlebars.registerHelper('eachProperty', function(obj, options) {
+    var key, result, value;
+    result = '';
+    for (key in obj) {
+      value = obj[key];
+      result += options.fn({
+        key: key,
+        value: value
+      });
     }
-    return ret;
+    return result;
   });
 
   Handlebars.registerHelper('add', function(value, addition) {
