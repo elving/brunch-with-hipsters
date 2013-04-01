@@ -6,18 +6,21 @@ exports.config =
             indentation:
                 value: 4
                 level: "error"
+            max_line_length:
+                value: 80
+                level: "error"
 
     files:
         javascripts:
             joinTo:
-                'javascripts/app.js': /^app/
-                'javascripts/vendor.js': /^vendor/
-                'test/javascripts/test.js': /^test(\/|\\)(?!vendor)/
-                'test/javascripts/test-vendor.js': /^test(\/|\\)(?=vendor)/
+                'scripts/app.js': /^app/
+                'scripts/vendor.js': /^vendor/
+                'test/scripts/test-vendor.js': /^test(\/|\\)(?=vendor)/
             order:
                 # Files in `vendor` directories are compiled before other files
                 # even if they aren't specified in order.
                 before: [
+                    'vendor/scripts/console-polyfill.js'
                     'vendor/scripts/jquery.js'
                     'vendor/scripts/lodash.js'
                     'vendor/scripts/backbone.js'
@@ -30,7 +33,6 @@ exports.config =
                     'vendor/styles/normalize.css'
                     'vendor/styles/typeplate-unminified.css'
                 ]
-                after: ['vendor/styles/helpers.css']
 
         templates:
-            joinTo: 'javascripts/app.js'
+            joinTo: 'scripts/app.js'

@@ -18,7 +18,7 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 - [Modernizr v2.6.2](https://github.com/Modernizr/Modernizr)
 - [Brunch Auto-Reload v1.3.2](https://github.com/brunch/auto-reload-brunch)
 - [Lodash v1.0.1](https://github.com/bestiejs/lodash)
-- [HTML5 Boilerplate v3.0.0](https://github.com/h5bp/html5-boilerplate)
+- [HTML5 Boilerplate v4.1.0](https://github.com/h5bp/html5-boilerplate)
 - [Coffeelint 1.4.4](https://github.com/ilkosta/coffeelint-brunch)
 
 ## Getting started
@@ -35,3 +35,15 @@ or
 or
 
     $ git clone git@github.com:elving/brunch-with-hipsters.git && npm install && brunch w -s
+
+## Testing
+
+To run your tests using (https://github.com/karma-runner)[Karma] you will need to install phantomJS:
+
+    brew install phantomjs
+
+To run the tests just:
+
+    cake test
+
+You can change Karma's configuration by editing `test/karma.conf.js` and add any test helpers by editing `test/helpers.coffee`.
