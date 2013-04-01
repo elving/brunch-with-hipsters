@@ -38,7 +38,7 @@ or
 
 ## Testing
 
-To run your tests using (https://github.com/karma-runner)[Karma] you will need to install phantomJS:
+To run your tests using [Karma](https://github.com/karma-runner) you will need to install phantomJS:
 
     brew install phantomjs
 
