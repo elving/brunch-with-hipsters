@@ -11,7 +11,13 @@ files = [
 
     'public/scripts/vendor.js',
     'public/scripts/app.js',
-    'public/test/scripts/test-vendor.js',
+
+    'test/vendor/scripts/chai.js',
+    'test/vendor/scripts/chai-jquery.js',
+    'test/vendor/scripts/chai-changes.js',
+    'test/vendor/scripts/chai-backbone.js',
+    'test/vendor/scripts/sinon.js',
+    'test/vendor/scripts/sinon-chai.js',
 
     'test/helpers.coffee',
 
