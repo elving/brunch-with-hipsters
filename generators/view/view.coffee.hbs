@@ -1,6 +1,4 @@
-View = require '../lib/view'
+module.exports = class {{#camelize}}{{name}}{{/camelize}}View extends Backbone.View
+    className: '{{name}}'
 
-module.exports = class {{#camelize}}{{name}}{{/camelize}}View extends View
     template: require 'views/templates/{{name}}'
-
-    className: {{name}}

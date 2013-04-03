@@ -3,8 +3,9 @@
         "from": "view.coffee.hbs",
         "to": "app/views/{{name}}.coffee"
     }],
+
     "dependencies": [{
-            "name": "view_test",
-            "params": "{{name}}"
+        "name": "view_test",
+        "params": "{{name}}"
     }]
 }

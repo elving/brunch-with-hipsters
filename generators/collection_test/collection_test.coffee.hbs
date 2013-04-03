@@ -3,3 +3,6 @@
 describe '{{#camelize}}{{pluralName}}{{/camelize}}Collection', ->
     beforeEach ->
         @collection = new {{#camelize}}{{pluralName}}{{/camelize}}Collection()
+
+    it 'should exist', ->
+        expect(@collection).to.be.ok

@@ -3,3 +3,6 @@
 describe '{{#camelize}}{{name}}{{/camelize}}Model', ->
     beforeEach ->
         @model = new {{#camelize}}{{name}}{{/camelize}}Model()
+
+    it 'should exist', ->
+        expect(@model).to.be.ok
