@@ -1,6 +1,6 @@
 /**
  * @license
- * Lo-Dash 1.0.1 <http://lodash.com/>
+ * Lo-Dash 1.1.1 <http://lodash.com/>
  * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
  * Based on Underscore.js 1.4.4 <http://underscorejs.org/>
  * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -17,9 +17,9 @@
   /** Detect free variable `module` */
   var freeModule = typeof module == 'object' && module && module.exports == freeExports && module;
 
-  /** Detect free variable `global` and use it as `window` */
+  /** Detect free variable `global`, from Node.js or Browserified code, and use it as `window` */
   var freeGlobal = typeof global == 'object' && global;
-  if (freeGlobal.global === freeGlobal) {
+  if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
     window = freeGlobal;
   }
 
@@ -28,6 +28,9 @@
 
   /** Used internally to indicate various things */
   var indicatorObject = {};
+
+  /** Used to prefix keys to avoid issues with `__proto__` and properties on `Object.prototype` */
+  var keyPrefix = +new Date + '';
 
   /** Used to match empty string literals in compiled template source */
   var reEmptyStringLeading = /\b__p \+= '';/g,
@@ -174,7 +177,7 @@
         toString = objectRef.toString;
 
     /* Native method shortcuts for methods with the same name as other `lodash` methods */
-    var nativeBind = reNative.test(nativeBind = slice.bind) && nativeBind,
+    var nativeBind = reNative.test(nativeBind = toString.bind) && nativeBind,
         nativeIsArray = reNative.test(nativeIsArray = Array.isArray) && nativeIsArray,
         nativeIsFinite = context.isFinite,
         nativeIsNaN = context.isNaN,
@@ -364,7 +367,7 @@
        * @type Boolean
        */
       try {
-        support.nodeClass = !(toString.call(document) == objectClass && !String({ 'toString': 0 }));
+        support.nodeClass = !(toString.call(document) == objectClass && !({ 'toString': 0 } + ''));
       } catch(e) {
         support.nodeClass = true;
       }
@@ -510,15 +513,14 @@
       '    <%= loop %>;' +
       '    <% if (support.enumPrototypes || useHas) { %>\n    }<% } %>\n' +
       '  }' +
-      '  <% } %>' +
 
       // Because IE < 9 can't set the `[[Enumerable]]` attribute of an
       // existing property and the `constructor` property of a prototype
       // defaults to non-enumerable, Lo-Dash skips the `constructor`
       // property when it infers it's iterating over a `prototype` object.
-      '  <% if (support.nonEnumShadows) { %>\n\n' +
+      '    <% if (support.nonEnumShadows) { %>\n\n' +
       '  var ctor = iterable.constructor;\n' +
-      '    <% for (var k = 0; k < 7; k++) { %>\n' +
+      '      <% for (var k = 0; k < 7; k++) { %>\n' +
       "  index = '<%= shadowedProps[k] %>';\n" +
       '  if (<%' +
       "      if (shadowedProps[k] == 'constructor') {" +
@@ -526,6 +528,7 @@
       '      } %>hasOwnProperty.call(iterable, index)) {\n' +
       '    <%= loop %>\n' +
       '  }' +
+      '      <% } %>' +
       '    <% } %>' +
       '  <% } %>' +
       '  <% if (arrays || support.nonEnumArgs) { %>\n}<% } %>\n' +
@@ -586,16 +589,14 @@
             index = fromIndex - 1;
 
         while (++index < length) {
-          // manually coerce `value` to a string because `hasOwnProperty`, in some
-          // older versions of Firefox, coerces objects incorrectly
-          var key = String(array[index]);
-          (hasOwnProperty.call(cache, key) ? cache[key] : (cache[key] = [])).push(array[index]);
+          var key = keyPrefix + array[index];
+          (cache[key] || (cache[key] = [])).push(array[index]);
         }
       }
       return function(value) {
         if (isLarge) {
-          var key = String(value);
-          return hasOwnProperty.call(cache, key) && indexOf(cache[key], value) > -1;
+          var key = keyPrefix + value;
+          return  cache[key] && indexOf(cache[key], value) > -1;
         }
         return indexOf(array, value, fromIndex) > -1;
       }
@@ -754,22 +755,6 @@
     }
 
     /**
-     * A function compiled to iterate `arguments` objects, arrays, objects, and
-     * strings consistenly across environments, executing the `callback` for each
-     * element in the `collection`. The `callback` is bound to `thisArg` and invoked
-     * with three arguments; (value, index|key, collection). Callbacks may exit
-     * iteration early by explicitly returning `false`.
-     *
-     * @private
-     * @type Function
-     * @param {Array|Object|String} collection The collection to iterate over.
-     * @param {Function} [callback=identity] The function called per iteration.
-     * @param {Mixed} [thisArg] The `this` binding of `callback`.
-     * @returns {Array|Object|String} Returns `collection`.
-     */
-    var each = createIterator(eachIteratorOptions);
-
-    /**
      * Used by `template` to escape characters for inclusion in compiled
      * string literals.
      *
@@ -802,7 +787,7 @@
     function isNode(value) {
       // IE < 9 presents DOM nodes as `Object` objects except they have `toString`
       // methods that are `typeof` "string" and still can coerce nodes to strings
-      return typeof value.toString != 'function' && typeof String(value) == 'string';
+      return typeof value.toString != 'function' && typeof (value + '') == 'string';
     }
 
     /**
@@ -845,7 +830,8 @@
       }
       // check that the constructor is `Object` (i.e. `Object instanceof Object`)
       var ctor = value.constructor;
-      if ((!isFunction(ctor) && (support.nodeClass || !isNode(value))) || ctor instanceof ctor) {
+
+      if (isFunction(ctor) ? ctor instanceof ctor : (support.nodeClass || !isNode(value))) {
         // IE < 9 iterates inherited properties before own properties. If the first
         // iterated property is an object's own property then there are no inherited
         // enumerable properties.
@@ -866,23 +852,6 @@
       }
       return result;
     }
-
-    /**
-     * A fallback implementation of `Object.keys` that produces an array of the
-     * given object's own enumerable property names.
-     *
-     * @private
-     * @type Function
-     * @param {Object} object The object to inspect.
-     * @returns {Array} Returns a new array of property names.
-     */
-    var shimKeys = createIterator({
-      'args': 'object',
-      'init': '[]',
-      'top': 'if (!(objectTypes[typeof object])) return result',
-      'loop': 'result.push(index)',
-      'arrays': false
-    });
 
     /**
      * Slices the `collection` from the `start` index up to, but not including,
@@ -974,6 +943,23 @@
     };
 
     /**
+     * A fallback implementation of `Object.keys` that produces an array of the
+     * given object's own enumerable property names.
+     *
+     * @private
+     * @type Function
+     * @param {Object} object The object to inspect.
+     * @returns {Array} Returns a new array of property names.
+     */
+    var shimKeys = createIterator({
+      'args': 'object',
+      'init': '[]',
+      'top': 'if (!(objectTypes[typeof object])) return result',
+      'loop': 'result.push(index)',
+      'arrays': false
+    });
+
+    /**
      * Creates an array composed of the own enumerable property names of `object`.
      *
      * @static
@@ -996,6 +982,22 @@
       }
       return nativeKeys(object);
     };
+
+    /**
+     * A function compiled to iterate `arguments` objects, arrays, objects, and
+     * strings consistenly across environments, executing the `callback` for each
+     * element in the `collection`. The `callback` is bound to `thisArg` and invoked
+     * with three arguments; (value, index|key, collection). Callbacks may exit
+     * iteration early by explicitly returning `false`.
+     *
+     * @private
+     * @type Function
+     * @param {Array|Object|String} collection The collection to iterate over.
+     * @param {Function} [callback=identity] The function called per iteration.
+     * @param {Mixed} [thisArg] The `this` binding of `callback`.
+     * @returns {Array|Object|String} Returns `collection`.
+     */
+    var each = createIterator(eachIteratorOptions);
 
     /**
      * Used to convert characters to HTML entities:
@@ -2039,9 +2041,10 @@
                 ? (isArray(value) ? value : [])
                 : (isPlainObject(value) ? value : {});
 
+              var isShallow;
               if (callback) {
                 result = callback(value, source);
-                if (typeof result != 'undefined') {
+                if ((isShallow = typeof result != 'undefined')) {
                   value = result;
                 }
               }
@@ -2050,7 +2053,7 @@
               stackB.push(value);
 
               // recursively merge objects and arrays (susceptible to call stack limits)
-              if (!callback) {
+              if (!isShallow) {
                 value = merge(value, source, indicatorObject, callback, stackA, stackB);
               }
             }
@@ -3622,8 +3625,8 @@
       while (++index < length) {
         var value = array[index];
         if (isLarge) {
-          var key = String(value);
-          var inited = hasOwnProperty.call(cache[0], key)
+          var key = keyPrefix + value;
+          var inited = cache[0][key]
             ? !(seen = cache[0][key])
             : (seen = cache[0][key] = []);
         }
@@ -4030,8 +4033,8 @@
             computed = callback ? callback(value, index, array) : value;
 
         if (isLarge) {
-          var key = String(computed);
-          var inited = hasOwnProperty.call(cache, key)
+          var key = keyPrefix + computed;
+          var inited = cache[key]
             ? !(seen = cache[key])
             : (seen = cache[key] = []);
         }
@@ -4516,7 +4519,7 @@
     function memoize(func, resolver) {
       var cache = {};
       return function() {
-        var key = String(resolver ? resolver.apply(this, arguments) : arguments[0]);
+        var key = keyPrefix + (resolver ? resolver.apply(this, arguments) : arguments[0]);
         return hasOwnProperty.call(cache, key)
           ? cache[key]
           : (cache[key] = func.apply(this, arguments));
@@ -5356,7 +5359,7 @@
      * @memberOf _
      * @type String
      */
-    lodash.VERSION = '1.0.1';
+    lodash.VERSION = '1.1.1';
 
     // add "Chaining" functions to the wrapper
     lodash.prototype.toString = wrapperToString;
