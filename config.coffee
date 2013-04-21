@@ -1,17 +1,4 @@
 exports.config =
-    # See docs at http://brunch.readthedocs.org/en/latest/config.html.
-    coffeelint:
-        pattern: /^app\/.*\.coffee$/
-
-        options:
-            indentation:
-                value: 4
-                level: "error"
-
-            max_line_length:
-                value: 80
-                level: "error"
-
     files:
         javascripts:
             joinTo:
@@ -36,3 +23,16 @@ exports.config =
 
         templates:
             joinTo: 'scripts/app.js'
+
+    plugins:
+        coffeelint:
+            pattern: /^app\/.*\.coffee$/
+
+            options:
+                indentation:
+                    value: 4
+                    level: "error"
+
+                max_line_length:
+                    value: 80
+                    level: "error"
