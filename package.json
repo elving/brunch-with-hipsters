@@ -12,23 +12,24 @@
         "node": "~0.6.10 || 0.8 || 0.9"
     },
     "scripts": {
+        "test": "cake build:test",
         "start": "brunch watch --server"
     },
     "dependencies": {
-        "javascript-brunch": "> 1.0 < 2.0",
-        "coffee-script-brunch": "> 1.0 < 2.0",
+        "javascript-brunch": ">= 1.0 < 1.7",
+        "coffee-script-brunch": ">= 1.0 < 1.7",
 
-        "css-brunch": "> 1.0 < 2.0",
-        "stylus-brunch": "> 1.0 < 2.0",
+        "css-brunch": ">= 1.0 < 1.7",
+        "stylus-brunch": ">= 1.0 < 1.7",
 
-        "handlebars-brunch": "> 1.0 < 2.0",
+        "handlebars-brunch": ">= 1.0 < 1.7",
 
-        "uglify-js-brunch": "> 1.0 < 2.0",
-        "clean-css-brunch": "> 1.0 < 2.0",
+        "uglify-js-brunch": ">= 1.0 < 1.7",
+        "clean-css-brunch": ">= 1.0 < 1.7",
 
-        "coffeelint-brunch": "> 1.0 < 2.0",
+        "coffeelint-brunch": ">= 1.0 < 1.7",
 
-        "auto-reload-brunch": "> 1.0 < 2.0"
+        "auto-reload-brunch": ">= 1.0 < 1.7"
     },
     "devDependencies": {
         "karma": "0.8.1"
