@@ -1,6 +1,6 @@
 /**
  * @license
- * Lo-Dash 1.1.1 <http://lodash.com/>
+ * Lo-Dash 1.2.0 <http://lodash.com/>
  * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
  * Based on Underscore.js 1.4.4 <http://underscorejs.org/>
  * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -31,6 +31,9 @@
 
   /** Used to prefix keys to avoid issues with `__proto__` and properties on `Object.prototype` */
   var keyPrefix = +new Date + '';
+
+  /** Used as the size when optimizations are enabled for large arrays */
+  var largeArraySize = 200;
 
   /** Used to match empty string literals in compiled template source */
   var reEmptyStringLeading = /\b__p \+= '';/g,
@@ -185,7 +188,8 @@
         nativeMax = Math.max,
         nativeMin = Math.min,
         nativeParseInt = context.parseInt,
-        nativeRandom = Math.random;
+        nativeRandom = Math.random,
+        nativeSlice = arrayRef.slice;
 
     /** Detect various environments */
     var isIeOpera = reNative.test(context.attachEvent),
@@ -204,7 +208,7 @@
     /*--------------------------------------------------------------------------*/
 
     /**
-     * Creates a `lodash` object, that wraps the given `value`, to enable method
+     * Creates a `lodash` object, which wraps the given `value`, to enable method
      * chaining.
      *
      * In addition to Lo-Dash methods, wrappers also have the following `Array` methods:
@@ -222,8 +226,8 @@
      * `invoke`, `keys`, `map`, `max`, `memoize`, `merge`, `min`, `object`, `omit`,
      * `once`, `pairs`, `partial`, `partialRight`, `pick`, `pluck`, `push`, `range`,
      * `reject`, `rest`, `reverse`, `shuffle`, `slice`, `sort`, `sortBy`, `splice`,
-     * `tap`, `throttle`, `times`, `toArray`, `union`, `uniq`, `unshift`, `values`,
-     * `where`, `without`, `wrap`, and `zip`
+     * `tap`, `throttle`, `times`, `toArray`, `union`, `uniq`, `unshift`, `unzip`,
+     * `values`, `where`, `without`, `wrap`, and `zip`
      *
      * The non-chainable wrapper functions are:
      * `clone`, `cloneDeep`, `contains`, `escape`, `every`, `find`, `has`,
@@ -242,6 +246,26 @@
      * @category Chaining
      * @param {Mixed} value The value to wrap in a `lodash` instance.
      * @returns {Object} Returns a `lodash` instance.
+     * @example
+     *
+     * var wrapped = _([1, 2, 3]);
+     *
+     * // returns an unwrapped value
+     * wrapped.reduce(function(sum, num) {
+     *   return sum + num;
+     * });
+     * // => 6
+     *
+     * // returns a wrapped value
+     * var squares = wrapped.map(function(num) {
+     *   return num * num;
+     * });
+     *
+     * _.isArray(squares);
+     * // => false
+     *
+     * _.isArray(squares.value());
+     * // => true
      */
     function lodash(value) {
       // don't wrap if already wrapped, even if wrapped by a different `lodash` constructor
@@ -269,12 +293,12 @@
       for (prop in arguments) { }
 
       /**
-       * Detect if `arguments` objects are `Object` objects (all but Opera < 10.5).
+       * Detect if `arguments` objects are `Object` objects (all but Narwhal and Opera < 10.5).
        *
        * @memberOf _.support
        * @type Boolean
        */
-      support.argsObject = arguments.constructor == Object;
+      support.argsObject = arguments.constructor == Object && !(arguments instanceof Array);
 
       /**
        * Detect if an `arguments` object's [[Class]] is resolvable (all but Firefox < 4, IE < 9).
@@ -440,7 +464,7 @@
      * The template used to create iterator functions.
      *
      * @private
-     * @param {Obect} data The data object used to populate the text.
+     * @param {Object} data The data object used to populate the text.
      * @returns {String} Returns the interpolated text.
      */
     var iteratorTemplate = template(
@@ -576,17 +600,15 @@
      * @private
      * @param {Array} array The array to search.
      * @param {Mixed} value The value to search for.
-     * @param {Number} fromIndex The index to search from.
-     * @param {Number} largeSize The length at which an array is considered large.
      * @returns {Boolean} Returns `true`, if `value` is found, else `false`.
      */
-    function cachedContains(array, fromIndex, largeSize) {
+    function cachedContains(array) {
       var length = array.length,
-          isLarge = (length - fromIndex) >= largeSize;
+          isLarge = length >= largeArraySize;
 
       if (isLarge) {
         var cache = {},
-            index = fromIndex - 1;
+            index = -1;
 
         while (++index < length) {
           var key = keyPrefix + array[index];
@@ -598,7 +620,7 @@
           var key = keyPrefix + value;
           return  cache[key] && indexOf(cache[key], value) > -1;
         }
-        return indexOf(array, value, fromIndex) > -1;
+        return indexOf(array, value) > -1;
       }
     }
 
@@ -684,7 +706,7 @@
         }
         if (partialArgs.length) {
           args = args.length
-            ? (args = slice(args), rightIndicator ? args.concat(partialArgs) : partialArgs.concat(args))
+            ? (args = nativeSlice.call(args), rightIndicator ? args.concat(partialArgs) : partialArgs.concat(args))
             : partialArgs;
         }
         if (this instanceof bound) {
@@ -710,6 +732,7 @@
      * @param {Object} [options1, options2, ...] The compile options object(s).
      *  arrays - A string of code to determine if the iterable is an array or array-like.
      *  useHas - A boolean to specify using `hasOwnProperty` checks in the object loop.
+     *  useKeys - A boolean to specify using `_.keys` for own property iteration.
      *  args - A string of comma separated arguments the iteration function will accept.
      *  top - A string of code to execute before the iteration branches.
      *  loop - A string of code to execute in the object loop.
@@ -813,7 +836,7 @@
     }
 
     /**
-     * A fallback implementation of `isPlainObject` that checks if a given `value`
+     * A fallback implementation of `isPlainObject` which checks if a given `value`
      * is an object created by the `Object` constructor, assuming objects created
      * by the `Object` constructor have no inherited enumerable properties and that
      * there are no `Object.prototype` extensions.
@@ -937,13 +960,11 @@
      * // => true
      */
     var isArray = nativeIsArray || function(value) {
-      // `instanceof` may cause a memory leak in IE 7 if `value` is a host object
-      // http://ajaxian.com/archives/working-aroung-the-instanceof-memory-leak
-      return (support.argsObject && value instanceof Array) || toString.call(value) == arrayClass;
+      return value && typeof value == 'object' && toString.call(value) == arrayClass;
     };
 
     /**
-     * A fallback implementation of `Object.keys` that produces an array of the
+     * A fallback implementation of `Object.keys` which produces an array of the
      * given object's own enumerable property names.
      *
      * @private
@@ -1264,7 +1285,7 @@
      * @static
      * @memberOf _
      * @category Objects
-     * @param {Array|Object|String} collection The collection to iterate over.
+     * @param {Object} object The object to search.
      * @param {Function|Object|String} [callback=identity] The function called per
      *  iteration. If a property name or object is passed, it will be used to create
      *  a "_.pluck" or "_.where" style callback, respectively.
@@ -1272,14 +1293,16 @@
      * @returns {Mixed} Returns the key of the found element, else `undefined`.
      * @example
      *
-     * _.findKey({ 'a': 1, 'b': 2, 'c': 3, 'd': 4 }, function(num) { return num % 2 == 0; });
+     * _.findKey({ 'a': 1, 'b': 2, 'c': 3, 'd': 4 }, function(num) {
+     *   return num % 2 == 0;
+     * });
      * // => 'b'
      */
-    function findKey(collection, callback, thisArg) {
+    function findKey(object, callback, thisArg) {
       var result;
       callback = lodash.createCallback(callback, thisArg);
-      forOwn(collection, function(value, key, collection) {
-        if (callback(value, key, collection)) {
+      forOwn(object, function(value, key, object) {
+        if (callback(value, key, object)) {
           result = key;
           return false;
         }
@@ -1444,7 +1467,7 @@
      * // => true
      */
     function isDate(value) {
-      return value instanceof Date || toString.call(value) == dateClass;
+      return value ? typeof value == 'object' && toString.call(value) == dateClass : false;
     }
 
     /**
@@ -1547,11 +1570,8 @@
     function isEqual(a, b, callback, thisArg, stackA, stackB) {
       // used to indicate that when comparing objects, `a` has at least the properties of `b`
       var whereIndicator = callback === indicatorObject;
-      if (callback && !whereIndicator) {
-        callback = (typeof thisArg == 'undefined')
-          ? callback
-          : lodash.createCallback(callback, thisArg, 2);
-
+      if (typeof callback == 'function' && !whereIndicator) {
+        callback = lodash.createCallback(callback, thisArg, 2);
         var result = callback(a, b);
         if (typeof result != 'undefined') {
           return !!result;
@@ -1751,7 +1771,7 @@
     // fallback for older versions of Chrome and Safari
     if (isFunction(/x/)) {
       isFunction = function(value) {
-        return value instanceof Function || toString.call(value) == funcClass;
+        return typeof value == 'function' && toString.call(value) == funcClass;
       };
     }
 
@@ -1901,7 +1921,7 @@
      * // => true
      */
     function isRegExp(value) {
-      return value instanceof RegExp || toString.call(value) == regexpClass;
+      return value ? typeof value == 'object' && toString.call(value) == regexpClass : false;
     }
 
     /**
@@ -2037,16 +2057,17 @@
               }
             }
             if (!found) {
-              value = isArr
-                ? (isArray(value) ? value : [])
-                : (isPlainObject(value) ? value : {});
-
               var isShallow;
               if (callback) {
                 result = callback(value, source);
                 if ((isShallow = typeof result != 'undefined')) {
                   value = result;
                 }
+              }
+              if (!isShallow) {
+                value = isArr
+                  ? (isArray(value) ? value : [])
+                  : (isPlainObject(value) ? value : {});
               }
               // add `source` and associated `value` to the stack of traversed objects
               stackA.push(source);
@@ -2108,12 +2129,12 @@
       if (isFunc) {
         callback = lodash.createCallback(callback, thisArg);
       } else {
-        var props = concat.apply(arrayRef, arguments);
+        var props = concat.apply(arrayRef, nativeSlice.call(arguments, 1));
       }
       forIn(object, function(value, key, object) {
         if (isFunc
               ? !callback(value, key, object)
-              : indexOf(props, key, 1) < 0
+              : indexOf(props, key) < 0
             ) {
           result[key] = value;
         }
@@ -2176,8 +2197,8 @@
     function pick(object, callback, thisArg) {
       var result = {};
       if (typeof callback != 'function') {
-        var index = 0,
-            props = concat.apply(arrayRef, arguments),
+        var index = -1,
+            props = concat.apply(arrayRef, nativeSlice.call(arguments, 1)),
             length = isObject(object) ? props.length : 0;
 
         while (++index < length) {
@@ -2247,7 +2268,7 @@
      */
     function at(collection) {
       var index = -1,
-          props = concat.apply(arrayRef, slice(arguments, 1)),
+          props = concat.apply(arrayRef, nativeSlice.call(arguments, 1)),
           length = props.length,
           result = Array(length);
 
@@ -2502,7 +2523,9 @@
      * @returns {Mixed} Returns the found element, else `undefined`.
      * @example
      *
-     * _.find([1, 2, 3, 4], function(num) { return num % 2 == 0; });
+     * _.find([1, 2, 3, 4], function(num) {
+     *   return num % 2 == 0;
+     * });
      * // => 2
      *
      * var food = [
@@ -2650,7 +2673,7 @@
      * // => [['1', '2', '3'], ['4', '5', '6']]
      */
     function invoke(collection, methodName) {
-      var args = slice(arguments, 2),
+      var args = nativeSlice.call(arguments, 2),
           index = -1,
           isFunc = typeof methodName == 'function',
           length = collection ? collection.length : 0,
@@ -2880,7 +2903,7 @@
     var pluck = map;
 
     /**
-     * Reduces a `collection` to a value that is the accumulated result of running
+     * Reduces a `collection` to a value which is the accumulated result of running
      * each element in the `collection` through the `callback`, where each successive
      * `callback` execution consumes the return value of the previous execution.
      * If `accumulator` is not passed, the first element of the `collection` will be
@@ -3287,8 +3310,8 @@
     function difference(array) {
       var index = -1,
           length = array ? array.length : 0,
-          flattened = concat.apply(arrayRef, arguments),
-          contains = cachedContains(flattened, length, 100),
+          flattened = concat.apply(arrayRef, nativeSlice.call(arguments, 1)),
+          contains = cachedContains(flattened),
           result = [];
 
       while (++index < length) {
@@ -3307,7 +3330,7 @@
      * @static
      * @memberOf _
      * @category Arrays
-     * @param {Array|Object|String} collection The collection to iterate over.
+     * @param {Array} array The array to search.
      * @param {Function|Object|String} [callback=identity] The function called per
      *  iteration. If a property name or object is passed, it will be used to create
      *  a "_.pluck" or "_.where" style callback, respectively.
@@ -3315,16 +3338,18 @@
      * @returns {Mixed} Returns the index of the found element, else `-1`.
      * @example
      *
-     * _.findIndex(['apple', 'banana', 'beet'], function(food) { return /^b/.test(food); });
+     * _.findIndex(['apple', 'banana', 'beet'], function(food) {
+     *   return /^b/.test(food);
+     * });
      * // => 1
      */
-    function findIndex(collection, callback, thisArg) {
+    function findIndex(array, callback, thisArg) {
       var index = -1,
-          length = collection ? collection.length : 0;
+          length = array ? array.length : 0;
 
       callback = lodash.createCallback(callback, thisArg);
       while (++index < length) {
-        if (callback(collection[index], index, collection)) {
+        if (callback(array[index], index, array)) {
           return index;
         }
       }
@@ -3426,7 +3451,7 @@
      * @static
      * @memberOf _
      * @category Arrays
-     * @param {Array} array The array to compact.
+     * @param {Array} array The array to flatten.
      * @param {Boolean} [isShallow=false] A flag to indicate only flattening a single level.
      * @param {Function|Object|String} [callback=identity] The function called per
      *  iteration. If a property name or object is passed, it will be used to create
@@ -3617,7 +3642,7 @@
           cache = { '0': {} },
           index = -1,
           length = array ? array.length : 0,
-          isLarge = length >= 100,
+          isLarge = length >= largeArraySize,
           result = [],
           seen = result;
 
@@ -3636,7 +3661,7 @@
           }
           var argsIndex = argsLength;
           while (--argsIndex) {
-            if (!(cache[argsIndex] || (cache[argsIndex] = cachedContains(args[argsIndex], 0, 100)))(value)) {
+            if (!(cache[argsIndex] || (cache[argsIndex] = cachedContains(args[argsIndex])))(value)) {
               continue outer;
             }
           }
@@ -3897,7 +3922,7 @@
      * @static
      * @memberOf _
      * @category Arrays
-     * @param {Array} array The array to iterate over.
+     * @param {Array} array The array to inspect.
      * @param {Mixed} value The value to evaluate.
      * @param {Function|Object|String} [callback=identity] The function called per
      *  iteration. If a property name or object is passed, it will be used to create
@@ -3960,7 +3985,10 @@
      * _.union([1, 2, 3], [101, 2, 1, 10], [2, 1]);
      * // => [1, 2, 3, 101, 10]
      */
-    function union() {
+    function union(array) {
+      if (!isArray(array)) {
+        arguments[0] = array ? nativeSlice.call(array) : arrayRef;
+      }
       return uniq(concat.apply(arrayRef, arguments));
     }
 
@@ -4020,7 +4048,7 @@
         isSorted = false;
       }
       // init value cache for large arrays
-      var isLarge = !isSorted && length >= 75;
+      var isLarge = !isSorted && length >= largeArraySize;
       if (isLarge) {
         var cache = {};
       }
@@ -4052,6 +4080,37 @@
     }
 
     /**
+     * The inverse of `_.zip`, this method splits groups of elements into arrays
+     * composed of elements from each group at their corresponding indexes.
+     *
+     * @static
+     * @memberOf _
+     * @category Arrays
+     * @param {Array} array The array to process.
+     * @returns {Array} Returns a new array of the composed arrays.
+     * @example
+     *
+     * _.unzip([['moe', 30, true], ['larry', 40, false]]);
+     * // => [['moe', 'larry'], [30, 40], [true, false]];
+     */
+    function unzip(array) {
+      var index = -1,
+          length = array ? array.length : 0,
+          tupleLength = length ? max(pluck(array, 'length')) : 0,
+          result = Array(tupleLength);
+
+      while (++index < length) {
+        var tupleIndex = -1,
+            tuple = array[index];
+
+        while (++tupleIndex < tupleLength) {
+          (result[tupleIndex] || (result[tupleIndex] = Array(length)))[index] = tuple[tupleIndex];
+        }
+      }
+      return result;
+    }
+
+    /**
      * Creates an array with all occurrences of the passed values removed using
      * strict equality for comparisons, i.e. `===`.
      *
@@ -4067,18 +4126,7 @@
      * // => [2, 3, 4]
      */
     function without(array) {
-      var index = -1,
-          length = array ? array.length : 0,
-          contains = cachedContains(arguments, 1, 30),
-          result = [];
-
-      while (++index < length) {
-        var value = array[index];
-        if (!contains(value)) {
-          result.push(value);
-        }
-      }
-      return result;
+      return difference(array, nativeSlice.call(arguments, 1));
     }
 
     /**
@@ -4204,7 +4252,7 @@
       // (in V8 `Function#bind` is slower except when partially applied)
       return support.fastBind || (nativeBind && arguments.length > 2)
         ? nativeBind.call.apply(nativeBind, arguments)
-        : createBound(func, thisArg, slice(arguments, 2));
+        : createBound(func, thisArg, nativeSlice.call(arguments, 2));
     }
 
     /**
@@ -4231,8 +4279,8 @@
      * // => alerts 'clicked docs', when the button is clicked
      */
     function bindAll(object) {
-      var funcs = concat.apply(arrayRef, arguments),
-          index = funcs.length > 1 ? 0 : (funcs = functions(object), -1),
+      var funcs = arguments.length > 1 ? concat.apply(arrayRef, nativeSlice.call(arguments, 1)) : functions(object),
+          index = -1,
           length = funcs.length;
 
       while (++index < length) {
@@ -4277,7 +4325,7 @@
      * // => 'hi, moe!'
      */
     function bindKey(object, key) {
-      return createBound(object, key, slice(arguments, 2), indicatorObject);
+      return createBound(object, key, nativeSlice.call(arguments, 2), indicatorObject);
     }
 
     /**
@@ -4407,45 +4455,64 @@
     /**
      * Creates a function that will delay the execution of `func` until after
      * `wait` milliseconds have elapsed since the last time it was invoked. Pass
-     * `true` for `immediate` to cause debounce to invoke `func` on the leading,
-     * instead of the trailing, edge of the `wait` timeout. Subsequent calls to
-     * the debounced function will return the result of the last `func` call.
+     * an `options` object to indicate that `func` should be invoked on the leading
+     * and/or trailing edge of the `wait` timeout. Subsequent calls to the debounced
+     * function will return the result of the last `func` call.
+     *
+     * Note: If `leading` and `trailing` options are `true`, `func` will be called
+     * on the trailing edge of the timeout only if the the debounced function is
+     * invoked more than once during the `wait` timeout.
      *
      * @static
      * @memberOf _
      * @category Functions
      * @param {Function} func The function to debounce.
      * @param {Number} wait The number of milliseconds to delay.
-     * @param {Boolean} immediate A flag to indicate execution is on the leading
-     *  edge of the timeout.
+     * @param {Object} options The options object.
+     *  [leading=false] A boolean to specify execution on the leading edge of the timeout.
+     *  [trailing=true] A boolean to specify execution on the trailing edge of the timeout.
      * @returns {Function} Returns the new debounced function.
      * @example
      *
      * var lazyLayout = _.debounce(calculateLayout, 300);
      * jQuery(window).on('resize', lazyLayout);
+     *
+     * jQuery('#postbox').on('click', _.debounce(sendMail, 200, {
+     *   'leading': true,
+     *   'trailing': false
+     * });
      */
-    function debounce(func, wait, immediate) {
+    function debounce(func, wait, options) {
       var args,
+          inited,
           result,
           thisArg,
-          timeoutId;
+          timeoutId,
+          trailing = true;
 
       function delayed() {
-        timeoutId = null;
-        if (!immediate) {
+        inited = timeoutId = null;
+        if (trailing) {
           result = func.apply(thisArg, args);
         }
       }
+      if (options === true) {
+        var leading = true;
+        trailing = false;
+      } else if (options && objectTypes[typeof options]) {
+        leading = options.leading;
+        trailing = 'trailing' in options ? options.trailing : trailing;
+      }
       return function() {
-        var isImmediate = immediate && !timeoutId;
         args = arguments;
         thisArg = this;
-
         clearTimeout(timeoutId);
-        timeoutId = setTimeout(delayed, wait);
 
-        if (isImmediate) {
+        if (!inited && leading) {
+          inited = true;
           result = func.apply(thisArg, args);
+        } else {
+          timeoutId = setTimeout(delayed, wait);
         }
         return result;
       };
@@ -4467,7 +4534,7 @@
      * // returns from the function before `alert` is called
      */
     function defer(func) {
-      var args = slice(arguments, 1);
+      var args = nativeSlice.call(arguments, 1);
       return setTimeout(function() { func.apply(undefined, args); }, 1);
     }
     // use `setImmediate` if it's available in Node.js
@@ -4493,7 +4560,7 @@
      * // => 'logged later' (Appears after one second.)
      */
     function delay(func, wait) {
-      var args = slice(arguments, 2);
+      var args = nativeSlice.call(arguments, 2);
       return setTimeout(function() { func.apply(undefined, args); }, wait);
     }
 
@@ -4579,7 +4646,7 @@
      * // => 'hi moe'
      */
     function partial(func) {
-      return createBound(func, slice(arguments, 1));
+      return createBound(func, nativeSlice.call(arguments, 1));
     }
 
     /**
@@ -4610,43 +4677,66 @@
      * // => { '_': _, 'jq': $ }
      */
     function partialRight(func) {
-      return createBound(func, slice(arguments, 1), null, indicatorObject);
+      return createBound(func, nativeSlice.call(arguments, 1), null, indicatorObject);
     }
 
     /**
-     * Creates a function that, when executed, will only call the `func`
-     * function at most once per every `wait` milliseconds. If the throttled
-     * function is invoked more than once during the `wait` timeout, `func` will
-     * also be called on the trailing edge of the timeout. Subsequent calls to the
-     * throttled function will return the result of the last `func` call.
+     * Creates a function that, when executed, will only call the `func` function
+     * at most once per every `wait` milliseconds. Pass an `options` object to
+     * indicate that `func` should be invoked on the leading and/or trailing edge
+     * of the `wait` timeout. Subsequent calls to the throttled function will
+     * return the result of the last `func` call.
+     *
+     * Note: If `leading` and `trailing` options are `true`, `func` will be called
+     * on the trailing edge of the timeout only if the the throttled function is
+     * invoked more than once during the `wait` timeout.
      *
      * @static
      * @memberOf _
      * @category Functions
      * @param {Function} func The function to throttle.
      * @param {Number} wait The number of milliseconds to throttle executions to.
+     * @param {Object} options The options object.
+     *  [leading=true] A boolean to specify execution on the leading edge of the timeout.
+     *  [trailing=true] A boolean to specify execution on the trailing edge of the timeout.
      * @returns {Function} Returns the new throttled function.
      * @example
      *
      * var throttled = _.throttle(updatePosition, 100);
      * jQuery(window).on('scroll', throttled);
+     *
+     * jQuery('.interactive').on('click', _.throttle(renewToken, 300000, {
+     *   'trailing': false
+     * }));
      */
-    function throttle(func, wait) {
+    function throttle(func, wait, options) {
       var args,
           result,
           thisArg,
           timeoutId,
-          lastCalled = 0;
+          lastCalled = 0,
+          leading = true,
+          trailing = true;
 
       function trailingCall() {
-        lastCalled = new Date;
         timeoutId = null;
-        result = func.apply(thisArg, args);
+        if (trailing) {
+          lastCalled = new Date;
+          result = func.apply(thisArg, args);
+        }
+      }
+      if (options === false) {
+        leading = false;
+      } else if (options && objectTypes[typeof options]) {
+        leading = 'leading' in options ? options.leading : leading;
+        trailing = 'trailing' in options ? options.trailing : trailing;
       }
       return function() {
-        var now = new Date,
-            remaining = wait - (now - lastCalled);
-
+        var now = new Date;
+        if (!timeoutId && !leading) {
+          lastCalled = now;
+        }
+        var remaining = wait - (now - lastCalled);
         args = arguments;
         thisArg = this;
 
@@ -4876,9 +4966,6 @@
      * Note: In the development build, `_.template` utilizes sourceURLs for easier
      * debugging. See http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl
      *
-     * Note: Lo-Dash may be used in Chrome extensions by either creating a `lodash csp`
-     * build and using precompiled templates, or loading Lo-Dash in a sandbox.
-     *
      * For more information on precompiling templates see:
      * http://lodash.com/#custom-builds
      *
@@ -4889,7 +4976,7 @@
      * @memberOf _
      * @category Utilities
      * @param {String} text The template text.
-     * @param {Obect} data The data object used to populate the text.
+     * @param {Object} data The data object used to populate the text.
      * @param {Object} options The options object.
      *  escape - The "escape" delimiter regexp.
      *  evaluate - The "evaluate" delimiter regexp.
@@ -5089,7 +5176,7 @@
     }
 
     /**
-     * The opposite of `_.escape`, this method converts the HTML entities
+     * The inverse of `_.escape`, this method converts the HTML entities
      * `&amp;`, `&lt;`, `&gt;`, `&quot;`, and `&#39;` in `string` to their
      * corresponding characters.
      *
@@ -5242,6 +5329,7 @@
     lodash.toArray = toArray;
     lodash.union = union;
     lodash.uniq = uniq;
+    lodash.unzip = unzip;
     lodash.values = values;
     lodash.where = where;
     lodash.without = without;
@@ -5359,7 +5447,7 @@
      * @memberOf _
      * @type String
      */
-    lodash.VERSION = '1.1.1';
+    lodash.VERSION = '1.2.0';
 
     // add "Chaining" functions to the wrapper
     lodash.prototype.toString = wrapperToString;
