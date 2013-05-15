@@ -1,6 +1,6 @@
 /**
  * @license
- * Lo-Dash 1.2.0 <http://lodash.com/>
+ * Lo-Dash 1.2.1 <http://lodash.com/>
  * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
  * Based on Underscore.js 1.4.4 <http://underscorejs.org/>
  * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
@@ -55,8 +55,20 @@
   /** Used to match "interpolate" template delimiters */
   var reInterpolate = /<%=([\s\S]+?)%>/g;
 
-  /** Used to match leading zeros to be removed */
-  var reLeadingZeros = /^0+(?=.$)/;
+  /** Used to detect and test whitespace */
+  var whitespace = (
+    // whitespace
+    ' \t\x0B\f\xA0\ufeff' +
+
+    // line terminators
+    '\n\r\u2028\u2029' +
+
+    // unicode category "Zs" space separators
+    '\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000'
+  );
+
+  /** Used to match leading whitespace and zeros to be removed */
+  var reLeadingSpacesAndZeros = RegExp('^[' + whitespace + ']*0+(?=.$)');
 
   /** Used to ensure capturing order of template delimiters */
   var reNoMatch = /($^)/;
@@ -69,9 +81,9 @@
 
   /** Used to assign default `context` object properties */
   var contextProps = [
-    'Array', 'Boolean', 'Date', 'Function', 'Math', 'Number', 'Object', 'RegExp',
-    'String', '_', 'attachEvent', 'clearTimeout', 'isFinite', 'isNaN', 'parseInt',
-    'setImmediate', 'setTimeout'
+    'Array', 'Boolean', 'Date', 'Error', 'Function', 'Math', 'Number', 'Object',
+    'RegExp', 'String', '_', 'attachEvent', 'clearTimeout', 'isFinite', 'isNaN',
+    'parseInt', 'setImmediate', 'setTimeout'
   ];
 
   /** Used to fix the JScript [[DontEnum]] bug */
@@ -88,6 +100,7 @@
       arrayClass = '[object Array]',
       boolClass = '[object Boolean]',
       dateClass = '[object Date]',
+      errorClass = '[object Error]',
       funcClass = '[object Function]',
       numberClass = '[object Number]',
       objectClass = '[object Object]',
@@ -145,6 +158,7 @@
     var Array = context.Array,
         Boolean = context.Boolean,
         Date = context.Date,
+        Error = context.Error,
         Function = context.Function,
         Math = context.Math,
         Number = context.Number,
@@ -154,15 +168,17 @@
         TypeError = context.TypeError;
 
     /** Used for `Array` and `Object` method references */
-    var arrayRef = Array(),
-        objectRef = Object();
+    var arrayProto = Array.prototype,
+        errorProto = Error.prototype,
+        objectProto = Object.prototype,
+        stringProto = String.prototype;
 
     /** Used to restore the original `_` reference in `noConflict` */
     var oldDash = context._;
 
     /** Used to detect if a method is native */
     var reNative = RegExp('^' +
-      String(objectRef.valueOf)
+      String(objectProto.valueOf)
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/valueOf|for [^\]]+/g, '.+?') + '$'
     );
@@ -170,14 +186,15 @@
     /** Native method shortcuts */
     var ceil = Math.ceil,
         clearTimeout = context.clearTimeout,
-        concat = arrayRef.concat,
+        concat = arrayProto.concat,
         floor = Math.floor,
         getPrototypeOf = reNative.test(getPrototypeOf = Object.getPrototypeOf) && getPrototypeOf,
-        hasOwnProperty = objectRef.hasOwnProperty,
-        push = arrayRef.push,
+        hasOwnProperty = objectProto.hasOwnProperty,
+        push = arrayProto.push,
+        propertyIsEnumerable = objectProto.propertyIsEnumerable,
         setImmediate = context.setImmediate,
         setTimeout = context.setTimeout,
-        toString = objectRef.toString;
+        toString = objectProto.toString;
 
     /* Native method shortcuts for methods with the same name as other `lodash` methods */
     var nativeBind = reNative.test(nativeBind = toString.bind) && nativeBind,
@@ -189,7 +206,7 @@
         nativeMin = Math.min,
         nativeParseInt = context.parseInt,
         nativeRandom = Math.random,
-        nativeSlice = arrayRef.slice;
+        nativeSlice = arrayProto.slice;
 
     /** Detect various environments */
     var isIeOpera = reNative.test(context.attachEvent),
@@ -200,10 +217,31 @@
     ctorByClass[arrayClass] = Array;
     ctorByClass[boolClass] = Boolean;
     ctorByClass[dateClass] = Date;
+    ctorByClass[errorClass] = Error;
+    ctorByClass[funcClass] = Function;
     ctorByClass[objectClass] = Object;
     ctorByClass[numberClass] = Number;
     ctorByClass[regexpClass] = RegExp;
     ctorByClass[stringClass] = String;
+
+    /** Used to avoid iterating non-enumerable properties in IE < 9 */
+    var nonEnumProps = {};
+    nonEnumProps[arrayClass] = nonEnumProps[dateClass] = nonEnumProps[numberClass] = { 'constructor': true, 'toLocaleString': true, 'toString': true, 'valueOf': true };
+    nonEnumProps[boolClass] = nonEnumProps[stringClass] = { 'constructor': true, 'toString': true, 'valueOf': true };
+    nonEnumProps[errorClass] = nonEnumProps[funcClass] = nonEnumProps[regexpClass] = { 'constructor': true, 'toString': true };
+    nonEnumProps[objectClass] = { 'constructor': true };
+
+    (function() {
+      var length = shadowedProps.length;
+      while (length--) {
+        var prop = shadowedProps[length];
+        for (var className in nonEnumProps) {
+          if (hasOwnProperty.call(nonEnumProps, className) && !hasOwnProperty.call(nonEnumProps[className], prop)) {
+            nonEnumProps[className][prop] = false;
+          }
+        }
+      }
+    }());
 
     /*--------------------------------------------------------------------------*/
 
@@ -243,6 +281,7 @@
      *
      * @name _
      * @constructor
+     * @alias chain
      * @category Chaining
      * @param {Mixed} value The value to wrap in a `lodash` instance.
      * @returns {Object} Returns a `lodash` instance.
@@ -309,6 +348,14 @@
       support.argsClass = isArguments(arguments);
 
       /**
+       * Detect if `name` or `message` properties of `Error.prototype` are
+       * enumerable by default. (IE < 9, Safari < 5.1)
+       *
+       * @type Boolean
+       */
+      support.enumErrorProps = propertyIsEnumerable.call(errorProto, 'message') || propertyIsEnumerable.call(errorProto, 'name');
+
+      /**
        * Detect if `prototype` properties are enumerable by default.
        *
        * Firefox < 3.6, Opera > 9.50 - Opera < 11.60, and Safari < 5.1
@@ -319,7 +366,7 @@
        * @memberOf _.support
        * @type Boolean
        */
-      support.enumPrototypes = ctor.propertyIsEnumerable('prototype');
+      support.enumPrototypes = propertyIsEnumerable.call(ctor, 'prototype');
 
       /**
        * Detect if `Function#bind` exists and is inferred to be fast (all but V8).
@@ -369,7 +416,7 @@
        * @memberOf _.support
        * @type Boolean
        */
-      support.spliceObjects = (arrayRef.splice.call(object, 0, 1), !object[0]);
+      support.spliceObjects = (arrayProto.splice.call(object, 0, 1), !object[0]);
 
       /**
        * Detect lack of support for accessing string characters by index.
@@ -475,10 +522,10 @@
       // exit early if the first argument is falsey
       'if (!iterable) return result;\n' +
       // add code before the iteration branches
-      '<%= top %>;\n' +
+      '<%= top %>;' +
 
       // array-like iteration:
-      '<% if (arrays) { %>' +
+      '<% if (arrays) { %>\n' +
       'var length = iterable.length; index = -1;\n' +
       'if (<%= arrays %>) {' +
 
@@ -491,19 +538,19 @@
 
       // iterate over the array-like value
       '  while (++index < length) {\n' +
-      '    <%= loop %>\n' +
+      '    <%= loop %>;\n' +
       '  }\n' +
       '}\n' +
       'else {' +
 
       // object iteration:
       // add support for iterating over `arguments` objects if needed
-      '  <%  } else if (support.nonEnumArgs) { %>\n' +
+      '  <% } else if (support.nonEnumArgs) { %>\n' +
       '  var length = iterable.length; index = -1;\n' +
       '  if (length && isArguments(iterable)) {\n' +
       '    while (++index < length) {\n' +
       "      index += '';\n" +
-      '      <%= loop %>\n' +
+      '      <%= loop %>;\n' +
       '    }\n' +
       '  } else {' +
       '  <% } %>' +
@@ -513,29 +560,37 @@
       "  var skipProto = typeof iterable == 'function';\n" +
       '  <% } %>' +
 
-      // iterate own properties using `Object.keys` if it's fast
+      // avoid iterating over `Error.prototype` properties in older IE and Safari
+      '  <% if (support.enumErrorProps || support.nonEnumShadows) { %>\n' +
+      '  var skipErrorProps = iterable === errorProto || iterable instanceof Error;\n' +
+      '  <% } %>' +
+
+      // define conditions used in the loop
+      '  <%' +
+      '    var conditions = [];' +
+      '    if (support.enumPrototypes) { conditions.push(\'!(skipProto && index == "prototype")\'); }' +
+      '    if (support.enumErrorProps)  { conditions.push(\'!(skipErrorProps && (index == "message" || index == "name"))\'); }' +
+      '  %>' +
+
+      // iterate own properties using `Object.keys`
       '  <% if (useHas && useKeys) { %>\n' +
       '  var ownIndex = -1,\n' +
       '      ownProps = objectTypes[typeof iterable] ? keys(iterable) : [],\n' +
       '      length = ownProps.length;\n\n' +
       '  while (++ownIndex < length) {\n' +
-      '    index = ownProps[ownIndex];\n' +
-      "    <% if (support.enumPrototypes) { %>if (!(skipProto && index == 'prototype')) {\n  <% } %>" +
-      '    <%= loop %>\n' +
-      '    <% if (support.enumPrototypes) { %>}\n<% } %>' +
+      '    index = ownProps[ownIndex];\n<%' +
+      "    if (conditions.length) { %>    if (<%= conditions.join(' && ') %>) {\n  <% } %>" +
+      '    <%= loop %>;' +
+      '    <% if (conditions.length) { %>\n    }<% } %>\n' +
       '  }' +
 
       // else using a for-in loop
       '  <% } else { %>\n' +
-      '  for (index in iterable) {<%' +
-      '    if (support.enumPrototypes || useHas) { %>\n    if (<%' +
-      "      if (support.enumPrototypes) { %>!(skipProto && index == 'prototype')<% }" +
-      '      if (support.enumPrototypes && useHas) { %> && <% }' +
-      '      if (useHas) { %>hasOwnProperty.call(iterable, index)<% }' +
-      '    %>) {' +
-      '    <% } %>\n' +
+      '  for (index in iterable) {\n<%' +
+      '    if (useHas) { conditions.push("hasOwnProperty.call(iterable, index)"); }' +
+      "    if (conditions.length) { %>    if (<%= conditions.join(' && ') %>) {\n  <% } %>" +
       '    <%= loop %>;' +
-      '    <% if (support.enumPrototypes || useHas) { %>\n    }<% } %>\n' +
+      '    <% if (conditions.length) { %>\n    }<% } %>\n' +
       '  }' +
 
       // Because IE < 9 can't set the `[[Enumerable]]` attribute of an
@@ -543,16 +598,20 @@
       // defaults to non-enumerable, Lo-Dash skips the `constructor`
       // property when it infers it's iterating over a `prototype` object.
       '    <% if (support.nonEnumShadows) { %>\n\n' +
-      '  var ctor = iterable.constructor;\n' +
-      '      <% for (var k = 0; k < 7; k++) { %>\n' +
-      "  index = '<%= shadowedProps[k] %>';\n" +
-      '  if (<%' +
-      "      if (shadowedProps[k] == 'constructor') {" +
-      '        %>!(ctor && ctor.prototype === iterable) && <%' +
-      '      } %>hasOwnProperty.call(iterable, index)) {\n' +
-      '    <%= loop %>\n' +
+      '  if (iterable !== objectProto) {\n' +
+      "    var ctor = iterable.constructor,\n" +
+      '        isProto = iterable === (ctor && ctor.prototype),\n' +
+      '        className = iterable === stringProto ? stringClass : iterable === errorProto ? errorClass : toString.call(iterable),\n' +
+      '        nonEnum = nonEnumProps[className];\n' +
+      '      <% for (k = 0; k < 7; k++) { %>\n' +
+      "    index = '<%= shadowedProps[k] %>';\n" +
+      '    if ((!(isProto && nonEnum[index]) && hasOwnProperty.call(iterable, index))<%' +
+      '        if (!useHas) { %> || (!nonEnum[index] && iterable[index] !== objectProto[index])<% }' +
+      '      %>) {\n' +
+      '      <%= loop %>;\n' +
+      '    }' +
+      '      <% } %>\n' +
       '  }' +
-      '      <% } %>' +
       '    <% } %>' +
       '  <% } %>' +
       '  <% if (arrays || support.nonEnumArgs) { %>\n}<% } %>\n' +
@@ -746,7 +805,7 @@
         'support': support,
 
         // iterator options
-        'arrays': 'isArray(iterable)',
+        'arrays': '',
         'bottom': '',
         'init': 'iterable',
         'loop': '',
@@ -766,14 +825,16 @@
 
       // create the function factory
       var factory = Function(
-          'hasOwnProperty, isArguments, isArray, isString, keys, ' +
-          'lodash, objectTypes',
+          'ctorByClass, errorClass, errorProto, hasOwnProperty, isArguments, ' +
+          'isArray, isString, keys, lodash, objectProto, objectTypes, nonEnumProps, ' +
+          'stringClass, stringProto, toString',
         'return function(' + args + ') {\n' + iteratorTemplate(data) + '\n}'
       );
       // return the compiled function
       return factory(
-        hasOwnProperty, isArguments, isArray, isString, keys,
-        lodash, objectTypes
+        ctorByClass, errorClass, errorProto, hasOwnProperty, isArguments,
+        isArray, isString, keys, lodash, objectProto, objectTypes, nonEnumProps,
+        stringClass, stringProto, toString
       );
     }
 
@@ -960,7 +1021,7 @@
      * // => true
      */
     var isArray = nativeIsArray || function(value) {
-      return value && typeof value == 'object' && toString.call(value) == arrayClass;
+      return value ? (typeof value == 'object' && toString.call(value) == arrayClass) : false;
     };
 
     /**
@@ -976,8 +1037,7 @@
       'args': 'object',
       'init': '[]',
       'top': 'if (!(objectTypes[typeof object])) return result',
-      'loop': 'result.push(index)',
-      'arrays': false
+      'loop': 'result.push(index)'
     });
 
     /**
@@ -1131,7 +1191,7 @@
 
       // allows working with "Collections" methods without using their `callback`
       // argument, `index|key`, for this method's `callback`
-      if (typeof deep == 'function') {
+      if (typeof deep != 'boolean' && deep != null) {
         thisArg = callback;
         callback = deep;
         deep = false;
@@ -1276,7 +1336,6 @@
      * // => { 'name': 'apple', 'type': 'fruit' }
      */
     var defaults = createIterator(defaultsIteratorOptions);
-
 
     /**
      * This method is similar to `_.find`, except that it returns the key of the
@@ -1467,7 +1526,7 @@
      * // => true
      */
     function isDate(value) {
-      return value ? typeof value == 'object' && toString.call(value) == dateClass : false;
+      return value ? (typeof value == 'object' && toString.call(value) == dateClass) : false;
     }
 
     /**
@@ -1800,7 +1859,7 @@
       // http://es5.github.com/#x8
       // and avoid a V8 bug
       // http://code.google.com/p/v8/issues/detail?id=2291
-      return value ? objectTypes[typeof value] : false;
+      return !!(value && objectTypes[typeof value]);
     }
 
     /**
@@ -1921,7 +1980,7 @@
      * // => true
      */
     function isRegExp(value) {
-      return value ? typeof value == 'object' && toString.call(value) == regexpClass : false;
+      return !!(value && objectTypes[typeof value]) && toString.call(value) == regexpClass;
     }
 
     /**
@@ -2129,7 +2188,7 @@
       if (isFunc) {
         callback = lodash.createCallback(callback, thisArg);
       } else {
-        var props = concat.apply(arrayRef, nativeSlice.call(arguments, 1));
+        var props = concat.apply(arrayProto, nativeSlice.call(arguments, 1));
       }
       forIn(object, function(value, key, object) {
         if (isFunc
@@ -2198,7 +2257,7 @@
       var result = {};
       if (typeof callback != 'function') {
         var index = -1,
-            props = concat.apply(arrayRef, nativeSlice.call(arguments, 1)),
+            props = concat.apply(arrayProto, nativeSlice.call(arguments, 1)),
             length = isObject(object) ? props.length : 0;
 
         while (++index < length) {
@@ -2268,7 +2327,7 @@
      */
     function at(collection) {
       var index = -1,
-          props = concat.apply(arrayRef, nativeSlice.call(arguments, 1)),
+          props = concat.apply(arrayProto, nativeSlice.call(arguments, 1)),
           length = props.length,
           result = Array(length);
 
@@ -3310,7 +3369,7 @@
     function difference(array) {
       var index = -1,
           length = array ? array.length : 0,
-          flattened = concat.apply(arrayRef, nativeSlice.call(arguments, 1)),
+          flattened = concat.apply(arrayProto, nativeSlice.call(arguments, 1)),
           contains = cachedContains(flattened),
           result = [];
 
@@ -3437,7 +3496,7 @@
     /**
      * Flattens a nested array (the nesting can be to any depth). If `isShallow`
      * is truthy, `array` will only be flattened a single level. If `callback`
-     * is passed, each element of `array` is passed through a callback` before
+     * is passed, each element of `array` is passed through a `callback` before
      * flattening. The `callback` is bound to `thisArg` and invoked with three
      * arguments; (value, index, array).
      *
@@ -3483,7 +3542,7 @@
       // juggle arguments
       if (typeof isShallow != 'boolean' && isShallow != null) {
         thisArg = callback;
-        callback = isShallow;
+        callback = !(thisArg && thisArg[isShallow] === array) ? isShallow : undefined;
         isShallow = false;
       }
       if (callback != null) {
@@ -3987,16 +4046,16 @@
      */
     function union(array) {
       if (!isArray(array)) {
-        arguments[0] = array ? nativeSlice.call(array) : arrayRef;
+        arguments[0] = array ? nativeSlice.call(array) : arrayProto;
       }
-      return uniq(concat.apply(arrayRef, arguments));
+      return uniq(concat.apply(arrayProto, arguments));
     }
 
     /**
      * Creates a duplicate-value-free version of the `array` using strict equality
      * for comparisons, i.e. `===`. If the `array` is already sorted, passing `true`
      * for `isSorted` will run a faster algorithm. If `callback` is passed, each
-     * element of `array` is passed through a callback` before uniqueness is computed.
+     * element of `array` is passed through a `callback` before uniqueness is computed.
      * The `callback` is bound to `thisArg` and invoked with three arguments; (value, index, array).
      *
      * If a property name is passed for `callback`, the created "_.pluck" style
@@ -4044,7 +4103,7 @@
       // juggle arguments
       if (typeof isSorted != 'boolean' && isSorted != null) {
         thisArg = callback;
-        callback = isSorted;
+        callback = !(thisArg && thisArg[isSorted] === array) ? isSorted : undefined;
         isSorted = false;
       }
       // init value cache for large arrays
@@ -4095,17 +4154,11 @@
      */
     function unzip(array) {
       var index = -1,
-          length = array ? array.length : 0,
-          tupleLength = length ? max(pluck(array, 'length')) : 0,
-          result = Array(tupleLength);
+          length = array ? max(pluck(array, 'length')) : 0,
+          result = Array(length < 0 ? 0 : length);
 
       while (++index < length) {
-        var tupleIndex = -1,
-            tuple = array[index];
-
-        while (++tupleIndex < tupleLength) {
-          (result[tupleIndex] || (result[tupleIndex] = Array(length)))[index] = tuple[tupleIndex];
-        }
+        result[index] = pluck(array, index);
       }
       return result;
     }
@@ -4146,14 +4199,7 @@
      * // => [['moe', 30, true], ['larry', 40, false]]
      */
     function zip(array) {
-      var index = -1,
-          length = array ? max(pluck(arguments, 'length')) : 0,
-          result = Array(length);
-
-      while (++index < length) {
-        result[index] = pluck(arguments, index);
-      }
-      return result;
+      return array ? unzip(arguments) : [];
     }
 
     /**
@@ -4279,7 +4325,7 @@
      * // => alerts 'clicked docs', when the button is clicked
      */
     function bindAll(object) {
-      var funcs = arguments.length > 1 ? concat.apply(arrayRef, nativeSlice.call(arguments, 1)) : functions(object),
+      var funcs = arguments.length > 1 ? concat.apply(arrayProto, nativeSlice.call(arguments, 1)) : functions(object),
           index = -1,
           length = funcs.length;
 
@@ -4484,15 +4530,16 @@
      */
     function debounce(func, wait, options) {
       var args,
-          inited,
           result,
           thisArg,
           timeoutId,
+          callCount = 0,
           trailing = true;
 
       function delayed() {
-        inited = timeoutId = null;
-        if (trailing) {
+        var isCalled = trailing && (!leading || callCount > 1);
+        callCount = timeoutId = 0;
+        if (isCalled) {
           result = func.apply(thisArg, args);
         }
       }
@@ -4508,12 +4555,10 @@
         thisArg = this;
         clearTimeout(timeoutId);
 
-        if (!inited && leading) {
-          inited = true;
+        if (leading && ++callCount < 2) {
           result = func.apply(thisArg, args);
-        } else {
-          timeoutId = setTimeout(delayed, wait);
         }
+        timeoutId = setTimeout(delayed, wait);
         return result;
       };
     }
@@ -4584,13 +4629,16 @@
      * });
      */
     function memoize(func, resolver) {
-      var cache = {};
-      return function() {
-        var key = keyPrefix + (resolver ? resolver.apply(this, arguments) : arguments[0]);
+      function memoized() {
+        var cache = memoized.cache,
+            key = keyPrefix + (resolver ? resolver.apply(this, arguments) : arguments[0]);
+
         return hasOwnProperty.call(cache, key)
           ? cache[key]
           : (cache[key] = func.apply(this, arguments));
-      };
+      }
+      memoized.cache = {};
+      return memoized;
     }
 
     /**
@@ -4878,6 +4926,8 @@
 
     /**
      * Converts the given `value` into an integer of the specified `radix`.
+     * If `radix` is `undefined` or `0`, a `radix` of `10` is used unless the
+     * `value` is a hexadecimal, in which case a `radix` of `16` is used.
      *
      * Note: This method avoids differences in native ES3 and ES5 `parseInt`
      * implementations. See http://es5.github.com/#E.
@@ -4885,16 +4935,17 @@
      * @static
      * @memberOf _
      * @category Utilities
-     * @param {Mixed} value The value to parse.
+     * @param {String} value The value to parse.
+     * @param {Number} [radix] The radix used to interpret the value to parse.
      * @returns {Number} Returns the new integer value.
      * @example
      *
      * _.parseInt('08');
      * // => 8
      */
-    var parseInt = nativeParseInt('08') == 8 ? nativeParseInt : function(value, radix) {
+    var parseInt = nativeParseInt(whitespace + '08') == 8 ? nativeParseInt : function(value, radix) {
       // Firefox and Opera still follow the ES3 specified implementation of `parseInt`
-      return nativeParseInt(isString(value) ? value.replace(reLeadingZeros, '') : value, radix || 0);
+      return nativeParseInt(isString(value) ? value.replace(reLeadingSpacesAndZeros, '') : value, radix || 0);
     };
 
     /**
@@ -4923,8 +4974,13 @@
       if (max == null) {
         max = min;
         min = 0;
+      } else {
+        max = +max || 0;
       }
-      return min + floor(nativeRandom() * ((+max || 0) - min + 1));
+      var rand = nativeRandom();
+      return (min % 1 || max % 1)
+        ? min + nativeMin(rand * (max - min + parseFloat('1e-' + ((rand +'').length - 1))), max)
+        : min + floor(rand * (max - min + 1));
     }
 
     /**
@@ -5338,6 +5394,7 @@
     lodash.zipObject = zipObject;
 
     // add aliases
+    lodash.chain = lodash;
     lodash.collect = map;
     lodash.drop = rest;
     lodash.each = forEach;
@@ -5447,7 +5504,7 @@
      * @memberOf _
      * @type String
      */
-    lodash.VERSION = '1.2.0';
+    lodash.VERSION = '1.2.1';
 
     // add "Chaining" functions to the wrapper
     lodash.prototype.toString = wrapperToString;
@@ -5456,7 +5513,7 @@
 
     // add `Array` functions that return unwrapped values
     each(['join', 'pop', 'shift'], function(methodName) {
-      var func = arrayRef[methodName];
+      var func = arrayProto[methodName];
       lodash.prototype[methodName] = function() {
         return func.apply(this.__wrapped__, arguments);
       };
@@ -5464,7 +5521,7 @@
 
     // add `Array` functions that return the wrapped value
     each(['push', 'reverse', 'sort', 'unshift'], function(methodName) {
-      var func = arrayRef[methodName];
+      var func = arrayProto[methodName];
       lodash.prototype[methodName] = function() {
         func.apply(this.__wrapped__, arguments);
         return this;
@@ -5473,7 +5530,7 @@
 
     // add `Array` functions that return new wrapped values
     each(['concat', 'slice', 'splice'], function(methodName) {
-      var func = arrayRef[methodName];
+      var func = arrayProto[methodName];
       lodash.prototype[methodName] = function() {
         return new lodashWrapper(func.apply(this.__wrapped__, arguments));
       };
@@ -5483,7 +5540,7 @@
     // in Firefox < 10 and IE < 9
     if (!support.spliceObjects) {
       each(['pop', 'shift', 'splice'], function(methodName) {
-        var func = arrayRef[methodName],
+        var func = arrayProto[methodName],
             isSplice = methodName == 'splice';
 
         lodash.prototype[methodName] = function() {
