@@ -3,23 +3,11 @@ exports.config =
         javascripts:
             joinTo:
                 'scripts/app.js': /^app/
-                'scripts/vendor.js': /^vendor/
-            order:
-                before: [
-                    'vendor/scripts/console-polyfill.js'
-                    'vendor/scripts/jquery.js'
-                    'vendor/scripts/lodash.js'
-                    'vendor/scripts/backbone.js'
-                ]
+                'scripts/vendor.js': /^(?!app)/
 
         stylesheets:
             joinTo:
                 'stylesheets/app.css'
-            order:
-                before: [
-                    'vendor/styles/normalize.css'
-                    'vendor/styles/typeplate-unminified.css'
-                ]
 
         templates:
             joinTo: 'scripts/app.js'
