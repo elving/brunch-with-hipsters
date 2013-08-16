@@ -2,15 +2,14 @@ exports.config =
     files:
         javascripts:
             joinTo:
-                'scripts/app.js': /^app/
-                'scripts/vendor.js': /^(?!app)/
+                'js/app.js': /^app/
+                'js/vendor.js': /^(?!app)/
 
         stylesheets:
-            joinTo:
-                'stylesheets/app.css'
+            joinTo: 'css/app.css'
 
         templates:
-            joinTo: 'scripts/app.js'
+            joinTo: 'js/app.js'
 
     plugins:
         coffeelint:
@@ -24,3 +23,6 @@ exports.config =
                 max_line_length:
                     value: 80
                     level: "error"
+
+    conventions:
+        assets: /(assets|font)/
