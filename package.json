@@ -28,6 +28,7 @@
         "clean-css-brunch": ">= 1.0 < 1.8",
 
         "coffeelint-brunch": ">= 1.0 < 1.8",
+        "imageoptmizer-brunch": "~0.0.3",
 
         "auto-reload-brunch": ">= 1.0 < 1.8"
     },

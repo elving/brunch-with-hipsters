@@ -12,6 +12,10 @@ exports.config =
             joinTo: 'js/app.js'
 
     plugins:
+        imageoptimizer:
+            path: 'images'
+            smushit: no
+
         coffeelint:
             pattern: /^app\/.*\.coffee$/
 
