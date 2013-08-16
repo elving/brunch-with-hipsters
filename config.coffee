@@ -6,9 +6,7 @@ exports.config =
                 'js/vendor.js': /^(?!app)/
 
         stylesheets:
-            joinTo:
-                'css/app.css': ->
-                    console.log arguments, this
+            joinTo: 'css/app.css'
 
         templates:
             joinTo: 'js/app.js'
