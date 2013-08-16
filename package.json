@@ -32,6 +32,7 @@
         "auto-reload-brunch": ">= 1.0 < 1.8"
     },
     "devDependencies": {
-        "karma": "0.10.1"
+        "karma": "~0.10",
+        "karma-phantomjs-launcher": "~0.1"
     }
 }
