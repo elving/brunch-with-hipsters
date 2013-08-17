@@ -3,7 +3,7 @@ exports.config =
         javascripts:
             joinTo:
                 'js/app.js': /^app/
-                'js/vendor.js': /^(?!app)/
+                'js/vendor.js': /^(?!app|test)/
 
         stylesheets:
             joinTo: 'css/app.css'
