@@ -27,15 +27,13 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 
 ## Getting started
 
-    $ brunch new <appname> --skeleton git@github.com:elving/brunch-with-hipsters.git
+    $ brunch new git@github.com:elving/brunch-with-hipsters.git
     $ bower install
     $ brunch w -s
 
 or
 
     $ git clone git@github.com:elving/brunch-with-hipsters.git
-    $ npm install
-    $ bower install
     $ brunch w -s
 
 or
