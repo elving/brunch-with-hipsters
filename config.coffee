@@ -2,8 +2,12 @@ exports.config =
     files:
         javascripts:
             joinTo:
-                'js/app.js': /^app/
-                'js/vendor.js': /^(?!app|test)/
+                'js/app.js': /^(vendor|bower_components|app)/
+
+            order:
+                after: ['bower_components/swag/lib/swag.js']
+
+            pluginHelpers: 'js/app.js'
 
         stylesheets:
             joinTo: 'css/app.css'
