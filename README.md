@@ -1,4 +1,4 @@
-# Brunch with Hipsters and Bootstrap
+# Brunch with Hipsters
 
 ![image](http://www.latimes.com/media/photo/2011-07/63171841.jpg)
 
@@ -28,12 +28,13 @@ Brunch with Hipsters is a rad [Brunch](http://brunch.io/) app skeleton that come
 ## Getting started
 
     $ brunch new git@github.com:elving/brunch-with-hipsters.git
-    $ bower install
     $ brunch w -s
 
 or
 
     $ git clone git@github.com:elving/brunch-with-hipsters.git
+    $ npm install
+    $ bower install
     $ brunch w -s
 
 or
@@ -88,4 +89,4 @@ Build and test your app:
 
     cake build:test
 
-You can change Karma's configuration by editing `test/karma.conf.js` and add any test helpers by editing `test/helpers.coffee`.
+You can change Karma's configuration by editing `test/karma.conf.coffee` and add any test helpers by editing `test/helpers.coffee`.
