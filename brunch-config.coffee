@@ -16,6 +16,12 @@ exports.config =
             joinTo: 'js/app.js'
 
     plugins:
+        autoReload:
+            enabled:
+                js: on
+                css: on
+                assets: off
+
         imageoptimizer:
             path: 'images'
             smushit: no
