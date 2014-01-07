@@ -10,7 +10,8 @@ exports.config =
             pluginHelpers: 'js/app.js'
 
         stylesheets:
-            joinTo: 'css/app.css'
+            joinTo:
+                'css/app.css': /^(vendor|bower_components|app)/
 
         templates:
             joinTo: 'js/app.js'
@@ -32,11 +33,10 @@ exports.config =
             options:
                 indentation:
                     value: 4
-                    level: "error"
+                    level: "warn"
 
                 max_line_length:
-                    value: 80
-                    level: "error"
+                    level: "ignore"
 
     conventions:
-        assets: /(assets|font)/
+        assets: /(assets|vendor\/assets|font)/
