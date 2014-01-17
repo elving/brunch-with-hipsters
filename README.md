@@ -90,3 +90,7 @@ Build and test your app:
     cake build:test
 
 You can change Karma's configuration by editing `test/karma.conf.coffee` and add any test helpers by editing `test/helpers.coffee`.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/elving/brunch-with-hipsters/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
